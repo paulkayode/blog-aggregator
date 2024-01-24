@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/segunkayode1/blog-aggregator/internal/database"
@@ -42,15 +43,38 @@ func main(){
 			continue;
 		  }
 		  wg := sync.WaitGroup{}
-		  c := make(chan *Channel, len(feeds))
+		  c := make(chan *returnVal, len(feeds))
 		  for _, feed := range feeds {
 			 wg.Add(1)
-			 go cfg.GetRssData(feed.Url, c, &wg)
+			 go cfg.GetRssData(feed.Url,feed.ID ,c, &wg)
+			 cfg.DB.MarkFeedFetched(ctx, database.MarkFeedFetchedParams{
+				LastFetchedAt: sql.NullTime{Time: time.Now(), Valid: true},
+				UpdatedAt: time.Now(),
+				ID:feed.ID,
+			 })
 		  }
 		  wg.Wait()
 		  close(c)
-		  for val := range c{
-              fmt.Println(val.Title)
+
+		  for feed := range c{
+			  for _,post :=  range feed.val.Item {
+					now = time.Now()
+					_, err := cfg.DB.CreatePosts(ctx, database.CreatePostsParams{
+						ID:uuid.New(),
+						CreatedAt: now,
+						UpdatedAt: now,
+						Title: post.Title,
+						Url: post.Link,
+						Description: post.Description,
+						PublishedAt: post.PubDate,
+						FeedID: feed.id,
+					})
+					if err != nil {
+						if err.Error() != "pq: duplicate key value violates unique constraint \"posts_url_key\""{
+							log.Println(err)
+						}
+					}
+			  }
 		  }
 		}
 		
@@ -80,6 +104,8 @@ func main(){
 	subRouterV1.Post("/feed_follows", cfg.MiddlewareAuth(cfg.PostFeedFollowHandler))
 	subRouterV1.Delete("/feed_follows/{feedFollowID}", cfg.MiddlewareAuth(cfg.DeleteFeedFollowHandler))
 	subRouterV1.Get("/feed_follows", cfg.MiddlewareAuth(cfg.GetFeedFollowsHandler))
+	subRouterV1.Get("/posts", cfg.MiddlewareAuth(cfg.GetPosts))
+	
 	mainRouter.Mount("/v1", subRouterV1)
 	
 

@@ -64,3 +64,27 @@ func GetUsersFeedsFromDatabaseUsersFeeds(userfeed database.UsersFeed) UsersFeed 
 		FeedID: userfeed.FeedID,
 	}
 }
+
+type Post struct {
+	ID          uuid.UUID
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Title       string
+	Url         string
+	Description string
+	PublishedAt string
+	FeedID      uuid.UUID
+}
+
+func GetPostsFromDatabasePosts(post database.Post) Post {
+	return Post{
+		ID:  post.ID,
+		CreatedAt: post.CreatedAt,
+		UpdatedAt: post.UpdatedAt,
+		Title:  post.Title,
+		Url: post.Url,
+		Description: post.Description,
+		PublishedAt: post.PublishedAt,
+		FeedID: post.FeedID,
+	}
+}

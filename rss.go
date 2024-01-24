@@ -2,10 +2,16 @@ package main
 
 import (
 	"encoding/xml"
+
 	"net/http"
 	"sync"
-)
 
+	"github.com/google/uuid"
+)
+type returnVal struct {
+	val * Channel
+	id   uuid.UUID
+}
 //Channel struct for RSS
 type Channel struct {
 	Title         string `xml:"title"`
@@ -36,7 +42,8 @@ type Item struct {
 	Content     string          `xml:"content"`
 	FullText    string          `xml:"full-text"`
 }
-func (cfg *apiConfig)GetRssData(url string, c chan * Channel, wg *sync.WaitGroup){
+
+func (cfg *apiConfig)GetRssData(url string, id uuid.UUID, c chan * returnVal, wg *sync.WaitGroup){
 	defer wg.Done()
     resp, err:= http.Get(url)
 	if err != nil {
@@ -52,5 +59,8 @@ func (cfg *apiConfig)GetRssData(url string, c chan * Channel, wg *sync.WaitGroup
 		c <- nil
 		return
 	}
-	c <- &data.Channel
+	c <- &returnVal{
+		val: &data.Channel,
+		id: id,
+	}
 }
