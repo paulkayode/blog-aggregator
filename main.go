@@ -1,14 +1,19 @@
-package main 
+package main
 
 import (
+	"context"
+	"database/sql"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
-	"net/http"
-	"os"
-	"log"
-    _ "github.com/lib/pq"
-	"database/sql"
+	_ "github.com/lib/pq"
 	"github.com/segunkayode1/blog-aggregator/internal/database"
 )
 
@@ -26,7 +31,30 @@ func main(){
 	cfg := &apiConfig{
 		DB: dbQueries,
 	}
-
+	T := time.NewTicker(time.Minute);
+	go func(t *time.Ticker){
+		for now := range T.C{
+			ctx := context.Background()
+          fmt.Printf("Fetching feeds at %v\n", now)
+		  feeds, err := cfg.DB.GetNextFeedToFetch(ctx, 10)
+		  if err != nil {
+			log.Println(err)
+			continue;
+		  }
+		  wg := sync.WaitGroup{}
+		  c := make(chan *Channel, len(feeds))
+		  for _, feed := range feeds {
+			 wg.Add(1)
+			 go cfg.GetRssData(feed.Url, c, &wg)
+		  }
+		  wg.Wait()
+		  close(c)
+		  for val := range c{
+              fmt.Println(val.Title)
+		  }
+		}
+		
+	}(T)
 	mainRouter := chi.NewRouter()
 
 	//cors middleWare 
