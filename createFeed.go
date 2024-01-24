@@ -25,10 +25,9 @@ func (cfg *apiConfig)PostFeedHandler(w http.ResponseWriter, r * http.Request, us
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	feedUuid := uuid.New()
 	now := time.Now()
 	feed, err := cfg.DB.CreateFeed(ctx, database.CreateFeedParams{
-		ID : feedUuid,
+		ID : uuid.New(),
 		CreatedAt: now,
 		UpdatedAt: now,
 		Name: req.Name,
@@ -40,7 +39,28 @@ func (cfg *apiConfig)PostFeedHandler(w http.ResponseWriter, r * http.Request, us
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	resp := GetFeedFromDatabaseFeed(feed)
+	feedfollow, err := cfg.DB.CreateFeedFollow(ctx, database.CreateFeedFollowParams{
+		ID: uuid.New(),
+		CreatedAt: now,
+		UpdatedAt: now,
+		UserID: user.ID,
+		FeedID: feed.ID,
+	})
+
+	if err != nil {
+		log.Println(err)
+		respondWithError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	resp := struct {
+		MyFeed Feed `json:"feed"`
+		MyFeedFollow UsersFeed `json:"feed_follow"`
+	}{
+		MyFeed: GetFeedFromDatabaseFeed(feed),
+		MyFeedFollow : GetUsersFeedsFromDatabaseUsersFeeds(feedfollow),
+	}
+
 	respondWithJson(w, http.StatusCreated, resp)
 
 }

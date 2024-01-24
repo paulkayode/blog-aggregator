@@ -49,8 +49,12 @@ func main(){
 	subRouterV1.Get("/users", cfg.MiddlewareAuth(cfg.GetUserHandler))
 	subRouterV1.Post("/feeds", cfg.MiddlewareAuth(cfg.PostFeedHandler))
 	subRouterV1.Get("/feeds", cfg.GetFeedsHandler)
+	subRouterV1.Post("/feed_follows", cfg.MiddlewareAuth(cfg.PostFeedFollowHandler))
+	subRouterV1.Delete("/feed_follows/{feedFollowID}", cfg.MiddlewareAuth(cfg.DeleteFeedFollowHandler))
+	subRouterV1.Get("/feed_follows", cfg.MiddlewareAuth(cfg.GetFeedFollowsHandler))
 	mainRouter.Mount("/v1", subRouterV1)
 	
+
 	server := http.Server{
 		Addr: ":" + port,
 		Handler : mainRouter,
