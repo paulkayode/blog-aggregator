@@ -8,6 +8,6 @@ func readinessHandler(w http.ResponseWriter, r * http.Request){
 	}
 	resp := response{
 		Status : "ok",
-	}
+	} 
 	respondWithJson(w, 200, resp)
 }

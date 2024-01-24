@@ -7,12 +7,25 @@ import (
 	"net/http"
 	"os"
 	"log"
+    _ "github.com/lib/pq"
+	"database/sql"
+	"github.com/segunkayode1/blog-aggregator/internal/database"
 )
 
 func main(){
 	//loading port from env
 	godotenv.Load()
 	port := os.Getenv("PORT")
+	dbUrl := os.Getenv("CONN")
+    db,err := sql.Open("postgres",dbUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	dbQueries := database.New(db)
+	cfg := &apiConfig{
+		DB: dbQueries,
+	}
 
 	mainRouter := chi.NewRouter()
 
@@ -32,7 +45,7 @@ func main(){
 	subRouterV1 := chi.NewRouter()
 	subRouterV1.Get("/readiness", readinessHandler)
 	subRouterV1.Get("/err", errorHandler)
-
+	subRouterV1.Post("/users", cfg.PostUser)
 	mainRouter.Mount("/v1", subRouterV1)
 	
 	server := http.Server{
