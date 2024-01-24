@@ -46,6 +46,8 @@ func main(){
 	subRouterV1.Get("/readiness", readinessHandler)
 	subRouterV1.Get("/err", errorHandler)
 	subRouterV1.Post("/users", cfg.PostUser)
+	subRouterV1.Get("/users", cfg.GetUser)
+
 	mainRouter.Mount("/v1", subRouterV1)
 	
 	server := http.Server{
