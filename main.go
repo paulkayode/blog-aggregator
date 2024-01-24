@@ -48,7 +48,7 @@ func main(){
 	subRouterV1.Post("/users", cfg.PostUserHandler)
 	subRouterV1.Get("/users", cfg.MiddlewareAuth(cfg.GetUserHandler))
 	subRouterV1.Post("/feeds", cfg.MiddlewareAuth(cfg.PostFeedHandler))
-
+	subRouterV1.Get("/feeds", cfg.GetFeedsHandler)
 	mainRouter.Mount("/v1", subRouterV1)
 	
 	server := http.Server{
