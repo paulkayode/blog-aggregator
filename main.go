@@ -45,8 +45,9 @@ func main(){
 	subRouterV1 := chi.NewRouter()
 	subRouterV1.Get("/readiness", readinessHandler)
 	subRouterV1.Get("/err", errorHandler)
-	subRouterV1.Post("/users", cfg.PostUser)
-	subRouterV1.Get("/users", cfg.GetUser)
+	subRouterV1.Post("/users", cfg.PostUserHandler)
+	subRouterV1.Get("/users", cfg.MiddlewareAuth(cfg.GetUserHandler))
+	subRouterV1.Post("/feeds", cfg.MiddlewareAuth(cfg.PostFeedHandler))
 
 	mainRouter.Mount("/v1", subRouterV1)
 	

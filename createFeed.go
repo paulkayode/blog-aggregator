@@ -11,34 +11,36 @@ import (
 )
 
   
-func (cfg *apiConfig)PostUserHandler(w http.ResponseWriter, r * http.Request){
+func (cfg *apiConfig)PostFeedHandler(w http.ResponseWriter, r * http.Request, user database.User){
 	ctx := context.Background()
 	type paramters struct {
 		Name string `json:"name"`
+		Url string `json:"url"`
 	}
-	decoder := json.NewDecoder(r.Body)
 	req := paramters{}
+	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&req)
 	if err != nil {
 		log.Println(err)
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
-	Useruuid := uuid.New()
-
+	feedUuid := uuid.New()
 	now := time.Now()
-    user, err := cfg.DB.CreateUser(ctx, database.CreateUserParams{
-		ID: Useruuid,
+	feed, err := cfg.DB.CreateFeed(ctx, database.CreateFeedParams{
+		ID : feedUuid,
 		CreatedAt: now,
 		UpdatedAt: now,
 		Name: req.Name,
+		Url: req.Url,
+		UserID: user.ID,
 	})
 	if err != nil {
 		log.Println(err)
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-    resp := GetUserFromDatabaseUser(user)
+	resp := GetFeedFromDatabaseFeed(feed)
 	respondWithJson(w, http.StatusCreated, resp)
+
 }
